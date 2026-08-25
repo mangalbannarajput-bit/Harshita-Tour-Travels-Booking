@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Harshita Tour & Travels - Booking Management</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7f9;
+      color: #222;
+    }
+
+    header {
+      background: linear-gradient(135deg, #087f23, #16a34a);
+      color: white;
+      text-align: center;
+      padding: 22px 15px;
+    }
+
+    header h1 {
+      font-size: 25px;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1100px;
+      margin: 20px auto;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .card h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .card strong {
+      font-size: 24px;
+      color: #087f23;
+    }
+
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .section h2 {
+      margin-bottom: 18px;
+      color: #087f23;
+      font-size: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .btn {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn-primary {
+      background: #087f23;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #222;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 850px;
+    }
+
+    th,
+    td {
+      padding: 11px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #087f23;
+      color: white;
+    }
+
+    .status {
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .confirmed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .completed {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .remaining {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px;
+      color: #777;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 13px;
+    }
+
+    @media (max-width: 700px) {
+      .dashboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🚍 HARSHITA TOUR & TRAVELS 🚍</h1>
+  <p>Booking Management System</p>
+  <p>🙏 श्री गणेशाय नमः 🙏</p>
+</header>
+
+<div class="container">
+
+  <!-- Dashboard -->
+  <div class="dashboard">
+
+    <div class="card">
+      <h3>Total Bookings</h3>
+      <strong id="totalBookings">0</strong>
+    </div>
+
+    <div class="card">
+      <h3>Confirmed</h3>
+      <strong id="confirmedBookings">0</strong>
+    </div>
+
+    <div class="card">
+      <h3>Completed</h3>
+      <strong id="completedBookings">0</strong>
+    </div>
+
+    <div class="card">
+      <h3>Payment Remaining</h3>
+      <strong id="remainingAmount">₹0</strong>
+    </div>
+
+  </div>
+
+  <!-- New Booking -->
+  <div class="section">
+
+    <h2>➕ नई Booking बनाएँ</h2>
+
+    <form id="bookingForm">
+
+      <div class="form-grid">
+
+        <div>
+          <label>Passenger Name</label>
+          <input type="text" id="passengerName" required>
+        </div>
+
+        <div>
+          <label>Mobile Number</label>
+          <input type="tel" id="mobile" required>
+        </div>
+
+        <div>
+          <label>Journey Date</label>
+          <input type="date" id="journeyDate" required>
+        </div>
+
+        <div>
+          <label>Destination</label>
+          <input type="text" id="destination" required>
+        </div>
+
+        <div>
+          <label>Pickup Location</label>
+          <input type="text" id="pickup">
+        </div>
+
+        <div>
+          <label>Reporting Time</label>
+          <input type="time" id="reportingTime">
+        </div>
+
+        <div>
+          <label>Vehicle</label>
+          <input type="text" id="vehicle" placeholder="Eeco / Car / Bus">
+        </div>
+
+        <div>
+          <label>Driver Name</label>
+          <input type="text" id="driverName">
+        </div>
+
+        <div>
+          <label>Driver Mobile</label>
+          <input type="tel" id="driverMobile">
+        </div>
+
+        <div>
+          <label>Total Fare ₹</label>
+          <input type="number" id="totalFare" min="0" value="0">
+        </div>
+
+        <div>
+          <label>Advance Paid ₹</label>
+          <input type="number" id="advancePaid" min="0" value="0">
+        </div>
+
+        <div>
+          <label>Booking Status</label>
+          <select id="bookingStatus">
+            <option value="PENDING">PENDING</option>
+            <option value="CONFIRMED">CONFIRMED</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label>Extra Notes</label>
+          <textarea id="notes" placeholder="कोई अतिरिक्त जानकारी..."></textarea>
+        </div>
+
+      </div>
+
+      <button class="btn btn-primary" type="submit">
+        💾 Booking Save करें
+      </button>
+
+      <button class="btn btn-secondary" type="reset">
+        Reset
+      </button>
+
+    </form>
+
+  </div>
+
+  <!-- Booking List -->
+  <div class="section">
+
+    <h2>📋 सभी Bookings</h2>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Tour ID</th>
+            <th>Passenger</th>
+            <th>Mobile</th>
+            <th>Date</th>
+            <th>Destination</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Remaining</th>
+            <th>Status</th>
+            <th>Payment</th>
+          </tr>
+        </thead>
+
+        <tbody id="bookingTable">
+
+          <tr>
+            <td colspan="10" class="empty">
+              अभी कोई booking नहीं है।
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  🚍 Harshita Tour & Travels<br>
+  धार्मिक यात्रा | पारिवारिक यात्रा | लोकल बुकिंग
+</footer>
+
+<script>
+
+  let bookings = JSON.parse(
+    localStorage.getItem("harshitaBookings")
+  ) || [];
+
+  function generateTourId() {
+
+    const year = new Date().getFullYear();
+
+    const number = String(bookings.length + 1).padStart(3, "0");
+
+    return `HTT-${year}-${number}`;
+  }
+
+  function saveBookings() {
+
+    localStorage.setItem(
+      "harshitaBookings",
+      JSON.stringify(bookings)
+    );
+
+  }
+
+  function updateDashboard() {
+
+    document.getElementById("totalBookings").textContent =
+      bookings.length;
+
+    document.getElementById("confirmedBookings").textContent =
+      bookings.filter(b => b.status === "CONFIRMED").length;
+
+    document.getElementById("completedBookings").textContent =
+      bookings.filter(b => b.status === "COMPLETED").length;
+
+    const remaining = bookings.reduce(
+      (sum, b) => sum + Number(b.remaining),
+      0
+    );
+
+    document.getElementById("remainingAmount").textContent =
+      "₹" + remaining.toLocaleString("en-IN");
+
+  }
+
+  function showBookings() {
+
+    const table = document.getElementById("bookingTable");
+
+    if (bookings.length === 0) {
+
+      table.innerHTML = `
+        <tr>
+          <td colspan="10" class="empty">
+            अभी कोई booking नहीं है।
+          </td>
+        </tr>
+      `;
+
+      updateDashboard();
+      return;
+    }
+
+    table.innerHTML = bookings.map(b => {
+
+      let statusClass = "pending";
+
+      if (b.status === "CONFIRMED") {
+        statusClass = "confirmed";
+      }
+
+      if (b.status === "COMPLETED") {
+        statusClass = "completed";
+      }
+
+      const paymentClass =
+        Number(b.remaining) <= 0
+          ? "paid"
+          : "remaining";
+
+      const paymentText =
+        Number(b.remaining) <= 0
+          ? "PAID"
+          : "₹" + Number(b.remaining).toLocaleString("en-IN");
+
+      return `
+        <tr>
+
+          <td><strong>${b.tourId}</strong></td>
+
+          <td>${b.passengerName}</td>
+
+          <td>${b.mobile}</td>
+
+          <td>${b.journeyDate}</td>
+
+          <td>${b.destination}</td>
+
+          <td>₹${Number(b.totalFare).toLocaleString("en-IN")}</td>
+
+          <td>₹${Number(b.advancePaid).toLocaleString("en-IN")}</td>
+
+          <td>
+            ₹${Number(b.remaining).toLocaleString("en-IN")}
+          </td>
+
+          <td>
+            <span class="status ${statusClass}">
+              ${b.status}
+            </span>
+          </td>
+
+          <td>
+            <span class="status ${paymentClass}">
+              ${paymentText}
+            </span>
+          </td>
+
+        </tr>
+      `;
+
+    }).join("");
+
+    updateDashboard();
+
+  }
+
+  document.getElementById("bookingForm")
+    .addEventListener("submit", function(event) {
+
+      event.preventDefault();
+
+      const totalFare =
+        Number(document.getElementById("totalFare").value) || 0;
+
+      const advancePaid =
+        Number(document.getElementById("advancePaid").value) || 0;
+
+      const remaining =
+        Math.max(totalFare - advancePaid, 0);
+
+      const booking = {
+
+        tourId: generateTourId(),
+
+        passengerName:
+          document.getElementById("passengerName").value,
+
+        mobile:
+          document.getElementById("mobile").value,
+
+        journeyDate:
+          document.getElementById("journeyDate").value,
+
+        destination:
+          document.getElementById("destination").value,
+
+        pickup:
+          document.getElementById("pickup").value,
+
+        reportingTime:
+          document.getElementById("reportingTime").value,
+
+        vehicle:
+          document.getElementById("vehicle").value,
+
+        driverName:
+          document.getElementById("driverName").value,
+
+        driverMobile:
+          document.getElementById("driverMobile").value,
+
+        totalFare: totalFare,
+
+        advancePaid: advancePaid,
+
+        remaining: remaining,
+
+        status:
+          document.getElementById("bookingStatus").value,
+
+        notes:
+          document.getElementById("notes").value,
+
+        createdAt:
+          new Date().toISOString()
+
+      };
+
+      bookings.push(booking);
+
+      saveBookings();
+
+      showBookings();
+
+      this.reset();
+
+      alert(
+        "Booking सफलतापूर्वक Save हो गई!\n\nTour ID: " +
+        booking.tourId
+      );
+
+    });
+
+  showBookings();
+
+</script>
+
+</body>
+        </html>
