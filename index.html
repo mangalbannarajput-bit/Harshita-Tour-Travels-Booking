@@ -43,7 +43,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
       margin-bottom: 20px;
     }
@@ -138,6 +138,15 @@
       color: white;
     }
 
+    .btn-link {
+      background: #087f23;
+      color: white;
+      padding: 7px 12px;
+      font-size: 12px;
+      margin-top: 0;
+      white-space: nowrap;
+    }
+
     .table-wrap {
       overflow-x: auto;
     }
@@ -181,6 +190,11 @@
     .completed {
       background: #dbeafe;
       color: #1e40af;
+    }
+
+    .cancelled {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .paid {
@@ -241,8 +255,18 @@
     </div>
 
     <div class="card">
+      <h3>Pending</h3>
+      <strong id="pendingBookings">0</strong>
+    </div>
+
+    <div class="card">
       <h3>Confirmed</h3>
       <strong id="confirmedBookings">0</strong>
+    </div>
+
+    <div class="card">
+      <h3>Cancelled</h3>
+      <strong id="cancelledBookings">0</strong>
     </div>
 
     <div class="card">
@@ -369,13 +393,14 @@
             <th>Remaining</th>
             <th>Status</th>
             <th>Payment</th>
+            <th>Customer Confirmation Link</th>
           </tr>
         </thead>
 
         <tbody id="bookingTable">
 
           <tr>
-            <td colspan="10" class="empty">
+            <td colspan="11" class="empty">
               अभी कोई booking नहीं है।
             </td>
           </tr>
@@ -401,15 +426,6 @@
     localStorage.getItem("harshitaBookings")
   ) || [];
 
-  function generateTourId() {
-
-    const year = new Date().getFullYear();
-
-    const number = String(bookings.length + 1).padStart(3, "0");
-
-    return `HTT-${year}-${number}`;
-  }
-
   function saveBookings() {
 
     localStorage.setItem(
@@ -419,21 +435,30 @@
 
   }
 
+  function confirmationLink(tourId) {
+    return window.location.origin + "/confirm.html?tourId=" + encodeURIComponent(tourId);
+  }
+
   function updateDashboard() {
 
     document.getElementById("totalBookings").textContent =
       bookings.length;
 
+    document.getElementById("pendingBookings").textContent =
+      bookings.filter(b => b.status === "PENDING").length;
+
     document.getElementById("confirmedBookings").textContent =
       bookings.filter(b => b.status === "CONFIRMED").length;
+
+    document.getElementById("cancelledBookings").textContent =
+      bookings.filter(b => b.status === "CANCELLED").length;
 
     document.getElementById("completedBookings").textContent =
       bookings.filter(b => b.status === "COMPLETED").length;
 
-    const remaining = bookings.reduce(
-      (sum, b) => sum + Number(b.remaining),
-      0
-    );
+    const remaining = bookings
+      .filter(b => b.status !== "CANCELLED")
+      .reduce((sum, b) => sum + Number(b.remaining), 0);
 
     document.getElementById("remainingAmount").textContent =
       "₹" + remaining.toLocaleString("en-IN");
@@ -448,7 +473,7 @@
 
       table.innerHTML = `
         <tr>
-          <td colspan="10" class="empty">
+          <td colspan="11" class="empty">
             अभी कोई booking नहीं है।
           </td>
         </tr>
@@ -458,12 +483,16 @@
       return;
     }
 
-    table.innerHTML = bookings.map(b => {
+    table.innerHTML = bookings.map((b, index) => {
 
       let statusClass = "pending";
 
       if (b.status === "CONFIRMED") {
         statusClass = "confirmed";
+      }
+
+      if (b.status === "CANCELLED") {
+        statusClass = "cancelled";
       }
 
       if (b.status === "COMPLETED") {
@@ -513,32 +542,60 @@
             </span>
           </td>
 
+          <td>
+            <button type="button" class="btn btn-link" data-copy-index="${index}">
+              📋 Copy Link
+            </button>
+          </td>
+
         </tr>
       `;
 
     }).join("");
 
+    table.querySelectorAll("[data-copy-index]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const booking = bookings[Number(button.dataset.copyIndex)];
+        const link = confirmationLink(booking.tourId);
+
+        try {
+          await navigator.clipboard.writeText(link);
+          const original = button.textContent;
+          button.textContent = "✅ Copied!";
+          setTimeout(() => { button.textContent = original; }, 1500);
+        } catch (err) {
+          window.prompt("Copy this Customer Confirmation Link:", link);
+        }
+      });
+    });
+
     updateDashboard();
 
   }
 
+  async function loadBookingsFromServer() {
+    try {
+      const response = await fetch("/api/bookings");
+      if (!response.ok) throw new Error("Failed to load bookings");
+
+      bookings = await response.json();
+      saveBookings();
+    } catch (err) {
+      console.warn("Could not load bookings from the server, showing cached data instead.", err);
+    }
+
+    showBookings();
+  }
+
   document.getElementById("bookingForm")
-    .addEventListener("submit", function(event) {
+    .addEventListener("submit", async function(event) {
 
       event.preventDefault();
 
-      const totalFare =
-        Number(document.getElementById("totalFare").value) || 0;
+      const submitButton = this.querySelector("button[type=submit]");
+      submitButton.disabled = true;
 
-      const advancePaid =
-        Number(document.getElementById("advancePaid").value) || 0;
-
-      const remaining =
-        Math.max(totalFare - advancePaid, 0);
-
-      const booking = {
-
-        tourId: generateTourId(),
+      const payload = {
 
         passengerName:
           document.getElementById("passengerName").value,
@@ -567,41 +624,63 @@
         driverMobile:
           document.getElementById("driverMobile").value,
 
-        totalFare: totalFare,
+        totalFare:
+          Number(document.getElementById("totalFare").value) || 0,
 
-        advancePaid: advancePaid,
+        advancePaid:
+          Number(document.getElementById("advancePaid").value) || 0,
 
-        remaining: remaining,
-
-        status:
+        bookingStatus:
           document.getElementById("bookingStatus").value,
 
         notes:
-          document.getElementById("notes").value,
-
-        createdAt:
-          new Date().toISOString()
+          document.getElementById("notes").value
 
       };
 
-      bookings.push(booking);
+      try {
 
-      saveBookings();
+        const response = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-      showBookings();
+        const booking = await response.json();
 
-      this.reset();
+        if (!response.ok) {
+          throw new Error(booking.error || "Booking save नहीं हो पाई।");
+        }
 
-      alert(
-        "Booking सफलतापूर्वक Save हो गई!\n\nTour ID: " +
-        booking.tourId
-      );
+        bookings.unshift(booking);
+
+        saveBookings();
+
+        showBookings();
+
+        this.reset();
+
+        alert(
+          "Booking सफलतापूर्वक Save हो गई!\n\nTour ID: " +
+          booking.tourId
+        );
+
+      } catch (err) {
+
+        alert(err.message || "Booking save नहीं हो पाई। कृपया फिर से कोशिश करें।");
+
+      } finally {
+
+        submitButton.disabled = false;
+
+      }
 
     });
 
-  showBookings();
+  loadBookingsFromServer();
 
 </script>
+
 
 </body>
         </html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmation - Harshita Tour & Travels</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7f9;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #087f23, #16a34a);
+      color: white;
+      text-align: center;
+      padding: 22px 15px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 520px;
+      margin: 24px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      color: #087f23;
+      font-size: 18px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .row .label {
+      color: #666;
+      font-weight: bold;
+    }
+
+    .row .value {
+      text-align: right;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .pending { background: #fff3cd; color: #856404; }
+    .confirmed { background: #d1fae5; color: #065f46; }
+    .cancelled { background: #fee2e2; color: #991b1b; }
+    .completed { background: #dbeafe; color: #1e40af; }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      padding: 14px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .btn-confirm {
+      background: #087f23;
+      color: white;
+    }
+
+    .btn-cancel {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .message h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .message.success h3 {
+      color: #087f23;
+    }
+
+    .message.cancelled h3 {
+      color: #991b1b;
+    }
+
+    .message .tour-id {
+      font-size: 16px;
+      font-weight: bold;
+      background: #f4f7f9;
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 6px;
+    }
+
+    .error {
+      text-align: center;
+      color: #991b1b;
+      padding: 20px 0;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 30px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🚍 HARSHITA TOUR & TRAVELS 🚍</h1>
+  <p>Booking Confirmation</p>
+</header>
+
+<div class="container">
+  <div id="content" class="card">
+    <p class="loading">Loading booking details...</p>
+  </div>
+</div>
+
+<footer>
+  🚍 Harshita Tour & Travels<br>
+  धार्मिक यात्रा | पारिवारिक यात्रा | लोकल बुकिंग
+</footer>
+
+<script>
+  const tourId = new URLSearchParams(window.location.search).get("tourId");
+  const content = document.getElementById("content");
+
+  function money(value) {
+    return "₹" + Number(value || 0).toLocaleString("en-IN");
+  }
+
+  function statusClass(status) {
+    if (status === "CONFIRMED") return "confirmed";
+    if (status === "CANCELLED") return "cancelled";
+    if (status === "COMPLETED") return "completed";
+    return "pending";
+  }
+
+  function renderError(message) {
+    content.innerHTML = `<p class="error">${message}</p>`;
+  }
+
+  function renderDetails(booking) {
+    const isDecided = booking.customerConfirmation !== "PENDING" || booking.bookingStatus === "COMPLETED";
+
+    const detailsHtml = `
+      <h2>Booking Details</h2>
+
+      <div class="row"><span class="label">Booking ID / Tour ID</span><span class="value"><strong>${booking.tourId}</strong></span></div>
+      <div class="row"><span class="label">Passenger Name</span><span class="value">${booking.passengerName}</span></div>
+      <div class="row"><span class="label">Mobile Number</span><span class="value">${booking.mobile}</span></div>
+      <div class="row"><span class="label">Journey Date</span><span class="value">${booking.journeyDate}</span></div>
+      <div class="row"><span class="label">Destination</span><span class="value">${booking.destination}</span></div>
+      <div class="row"><span class="label">Pickup Location</span><span class="value">${booking.pickup || "-"}</span></div>
+      <div class="row"><span class="label">Reporting Time</span><span class="value">${booking.reportingTime || "-"}</span></div>
+      <div class="row"><span class="label">Vehicle</span><span class="value">${booking.vehicle || "-"}</span></div>
+      <div class="row"><span class="label">Total Fare</span><span class="value">${money(booking.totalFare)}</span></div>
+      <div class="row"><span class="label">Advance Paid</span><span class="value">${money(booking.advancePaid)}</span></div>
+      <div class="row"><span class="label">Remaining Amount</span><span class="value">${money(booking.remaining)}</span></div>
+      <div class="row"><span class="label">Current Booking Status</span><span class="value"><span class="status ${statusClass(booking.bookingStatus)}">${booking.bookingStatus}</span></span></div>
+    `;
+
+    if (isDecided) {
+      const decisionNote = booking.bookingStatus === "COMPLETED"
+        ? "<p class=\"message\"><em>This booking has already been completed.</em></p>"
+        : `<p class="message"><em>This booking was already ${booking.customerConfirmation.toLowerCase()} by the customer.</em></p>`;
+
+      content.innerHTML = detailsHtml + decisionNote;
+      return;
+    }
+
+    content.innerHTML = `
+      ${detailsHtml}
+      <div class="actions">
+        <button class="btn btn-confirm" id="confirmBtn">CONFIRM BOOKING</button>
+        <button class="btn btn-cancel" id="cancelBtn">CANCEL BOOKING</button>
+      </div>
+    `;
+
+    document.getElementById("confirmBtn").addEventListener("click", () => submitAction("confirm"));
+    document.getElementById("cancelBtn").addEventListener("click", () => submitAction("cancel"));
+  }
+
+  function renderResult(action, tourId) {
+    if (action === "confirm") {
+      content.innerHTML = `
+        <div class="message success">
+          <h3>✅ Booking Confirmed Successfully</h3>
+          <p>Booking ID / Tour ID</p>
+          <p class="tour-id">${tourId}</p>
+        </div>
+      `;
+    } else {
+      content.innerHTML = `
+        <div class="message cancelled">
+          <h3>Booking Cancelled</h3>
+          <p>Booking ID / Tour ID</p>
+          <p class="tour-id">${tourId}</p>
+        </div>
+      `;
+    }
+  }
+
+  async function submitAction(action) {
+    const confirmBtn = document.getElementById("confirmBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    if (action === "cancel") {
+      const proceed = window.confirm("Are you sure you want to cancel this booking?");
+      if (!proceed) {
+        if (confirmBtn) confirmBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/booking-${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tourId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        renderError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
+      renderResult(action, data.tourId);
+    } catch (err) {
+      renderError("Could not reach the server. Please check your connection and try again.");
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+    }
+  }
+
+  async function loadBooking() {
+    if (!tourId) {
+      renderError("No booking ID was provided in this link.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/booking-confirmation?tourId=${encodeURIComponent(tourId)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        renderError(data.error || "Booking not found.");
+        return;
+      }
+
+      renderDetails(data);
+    } catch (err) {
+      renderError("Could not reach the server. Please check your connection and try again.");
+    }
+  }
+
+  loadBooking();
+</script>
+
+</body>
+</html>
