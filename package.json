@@ -1,0 +1,29 @@
+{
+  "name": "repo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://x-access-token:ghs_13473_eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhdXRobmQiLCJjdHgiOiJ3MGFhbFBIRTdxMkkySE1iU0s1UHp1VmJ1ekFuQ3FGS2xWM1AyZ1JoRmFBYjd4aGg2bW1maWpfUGlRIiwiZXhwIjoxNzg3NjQ0MTAyLCJpYXQiOjE3ODc2NDA1MDIsImlzcyI6ImdpdGh1YiIsImp0aSI6IjYwNzliYTdmLWMzMjItNDE3Yi1iZTZiLWE0YjNlMzIwOGI1NCIsInZlciI6M30.EJeJjKzi-qOtqBL0UuVmYngy-1n9Ef7Uinh5lfsD0WuW75uXo7c5f2I7CxNcOLrTlKKaYaY2b9Old8M4vMFiDw@github.com/mangalbannarajput-bit/Harshita-Tour-Travels-Booking.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mangalbannarajput-bit/Harshita-Tour-Travels-Booking/issues"
+  },
+  "homepage": "https://github.com/mangalbannarajput-bit/Harshita-Tour-Travels-Booking#readme",
+  "dependencies": {
+    "@netlify/database": "^2.0.0",
+    "drizzle-orm": "^1.0.0-beta.22"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^6.0.0",
+    "drizzle-kit": "^1.0.0-beta.22"
+  }
+}
